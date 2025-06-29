@@ -1,0 +1,31 @@
+@import './base.css';
+
+:root {
+  --hyperlink-hover: #2e856e;
+  --hyperlink-color: #1d4ed8;
+}
+
+#app {
+  margin: 0;
+  padding: 0;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.hc {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.hyperlink {
+  cursor: pointer;
+  color: var(--hyperlink-color);
+}
+
+.hyperlink:hover {
+  cursor: pointer;
+  color: var(--hyperlink-hover);
+}
