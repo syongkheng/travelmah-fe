@@ -37,7 +37,6 @@ const handleSearchItinerary = () => {
             <RouterLink to="/">{{ 'TravelMah' }}</RouterLink>
           </div>
         </div>
-        <el-tag>{{ isAuthenticated }}</el-tag>
         <div>
           <el-input v-model="searchInput" style="width: 225px" placeholder="Search itineraries" :prefix-icon="Search">
             <template #suffix>
@@ -75,67 +74,81 @@ const handleSearchItinerary = () => {
 
 <style scoped>
 .header {
-  background-color: #f8f9fa;
-  padding: 1em;
-  border-bottom: 1px solid #e9ecef;
+  --header-bg: #f8f9fa;
+  --border-color: #e9ecef;
+  --text-color: #2c3e50;
+  --active-color: #42b983;
+  --success-color: var(--el-color-success);
+  --white: var(--el-color-white);
+  --icon-color: #aaaaaa;
+
   position: sticky;
   top: 0;
   z-index: 999;
+  padding: 1em;
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .nav-container {
-  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin: 0 auto;
   padding: 0 1em 0 0.5em;
 }
 
+/* Logo & Menu Toggle */
 .logo-env {
   display: flex;
-  flex-direction: row;
   align-items: center;
   gap: 0.5rem;
+
+  a {
+    font: bold 1.5em sans-serif;
+    color: var(--text-color);
+    text-decoration: none;
+  }
 }
 
-.logo-env a {
-  font-size: 1.5em;
-  font-weight: bold;
-  color: #2c3e50;
-  text-decoration: none;
-}
-
+/* Navigation Links */
 .nav-links {
   display: flex;
   gap: 2em;
-  list-style: none;
   margin: 0;
   padding: 0;
+  list-style: none;
+
+  a {
+    color: var(--text-color);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.3s ease;
+
+    &:hover,
+    &.active {
+      color: var(--active-color);
+    }
+
+    &.active {
+      border-bottom: 2px solid var(--active-color);
+    }
+  }
 }
 
-.nav-links a {
-  text-decoration: none;
-  color: #2c3e50;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.nav-links a:hover {
-  color: #42b983;
-}
-
-.nav-links a.active {
-  color: #42b983;
-  border-bottom: 2px solid #42b983;
-}
-
+/* Utility Classes */
 .clickable {
   cursor: pointer;
 }
 
+.toggle-menu-expansion {
+  display: flex;
+  color: var(--icon-color);
+}
+
+/* Search & Engagement */
 .engagement-container {
   display: flex;
-  flex-direction: row;
   align-items: center;
   gap: 1rem;
 }
@@ -144,21 +157,29 @@ const handleSearchItinerary = () => {
   display: flex;
   width: 100%;
   height: 100%;
-  background-color: var(--el-color-success);
-  color: var(--el-color-white);
-  border-radius: 0 0.25rem 0.25rem 0;
-  justify-content: center;
   align-items: center;
-  padding-right: 1rem;
-  padding-left: 0.25rem;
+  justify-content: center;
+  padding: 0 1rem 0 0.25rem;
+  color: var(--white);
+  background-color: var(--success-color);
+  border-radius: 0 0.25rem 0.25rem 0;
 }
 
-::v-deep .el-input__wrapper {
+/* Element Plus Overrides */
+:deep(.el-input__wrapper) {
   padding-right: 0;
 }
 
-.toggle-menu-expansion {
-  display: flex;
-  color: #aaaaaa;
+/* Responsive Behavior */
+@media (max-width: 800px) {
+
+  .engagement-container>*:not(.toggle-menu-expansion):not(.logo-env),
+  .nav-links>*:not(:has(.el-button--success)) {
+    display: none;
+  }
+
+  .el-button--success {
+    display: inline-flex;
+  }
 }
 </style>

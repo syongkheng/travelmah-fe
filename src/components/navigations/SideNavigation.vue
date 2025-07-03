@@ -5,11 +5,15 @@ import { useNav } from '@/hooks/useNav'
 import { ElMessage } from 'element-plus';
 import { useAuthenticationStore } from '@/stores/authentication';
 import { storeToRefs } from 'pinia';
+import { onMounted } from 'vue';
+import { useBreakpointManager } from '@/composables/useBreakpointManager';
+import { Breakpoint } from '@/constants/Breakpoint';
 
 const layoutStore = useLayoutStateStore()
 const navigate = useNav();
 const authStore = useAuthenticationStore()
 const { isAuthenticated } = storeToRefs(authStore) // Preserves reactivity
+const { isScreensizeBelow } = useBreakpointManager();
 
 const handleLogout = () => {
   authStore.handleLogout()
@@ -24,10 +28,16 @@ const handleMyItinerary = () => {
 const handleSetting = () => {
   ElMessage.info("Page Coming Soon")
 }
+
+onMounted(async () => {
+  if (isScreensizeBelow(Breakpoint.M)) {
+    await layoutStore.sideNav.setFalse()
+  }
+})
 </script>
 
 <template>
-  <el-menu class="el-menu-vertical-demo" :collapse="layoutStore.sideNav.isExpanded">
+  <el-menu class="el-menu-vertical-demo" :collapse="!layoutStore.sideNav.isExpanded">
     <span @click="navigate.redirectToPlanning">
       <el-menu-item index="1">
         <el-icon>
@@ -45,8 +55,6 @@ const handleSetting = () => {
         <template #title>{{ 'Search an Itinerary' }}</template>
       </el-menu-item>
     </span>
-
-
     <el-divider />
     <span class="authenticated menu" v-if="isAuthenticated">
       <span @click="handleMyItinerary">

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, h, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import AgendaCardForm from '@/components/AgendaCardForm.vue'
 import { hierarchicalLocations } from '@/interfaces/HierarchicalLocation'
@@ -13,7 +13,11 @@ import { GeneratorUtils } from '@/utilities/GeneratorUtils'
 import { useNav } from '@/hooks/useNav'
 import { useLayoutStateStore } from '@/stores/layoutState'
 import { useAuthenticationStore } from '@/stores/authentication'
+import { useBreakpointManager } from '@/composables/useBreakpointManager';
+import { Breakpoint } from '@/constants/Breakpoint';
 
+const { isScreensizeBelow } = useBreakpointManager();
+const isMobile = computed(() => isScreensizeBelow(Breakpoint.M));
 const route = useRoute()
 const navigate = useNav()
 const sessionId = route.query.session?.toString()
@@ -194,7 +198,7 @@ onBeforeUnmount(() => {
   <div class="page-container">
     <header class="session-header">
       <div class="title-container">
-        <div class="itinerary-details-header-container">
+        <div class="itinerary-details-header-container" :class="{ 'mobile-layout': isMobile }">
           <div>
             <span v-if="toggleEditingTitle">
               <el-input v-model="itinerary.sessionTitle" class="session-title-input" :validate-event="false"
@@ -286,83 +290,115 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Base Container */
-.notification-error-description {
-  margin-bottom: 1rem;
-}
-
+/* ============ Base Styles ============ */
 .page-container {
+  --primary-color: #4f46e5;
+  --text-color: #1a1a1a;
+  --bg-color: #f8fafc;
+  --card-bg: white;
+  --border-color: #e4e7ed;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --transition: 0.2s ease;
+
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   padding: 1.5rem;
-  background: #f8fafc;
+  background: var(--bg-color);
 }
 
-/* Header Section */
+/* ============ Header Section ============ */
 .session-header {
-  background: white;
+  background: var(--card-bg);
   padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.itinerary-details-header-container {
-  display: flex;
-  flex-direction: row;
-  gap: 1.25rem;
-  align-items: center;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .title-container {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.itinerary-details-header-container {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+
+  &.mobile-layout {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+
+    >div:last-child {
+      align-self: flex-end;
+    }
+  }
 }
 
 .session-title-container {
   font-size: 1.75rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-color);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
-/* Itinerary Content */
+.session-title-input {
+  font-size: 1.75rem !important;
+  font-weight: 600;
+}
+
+.tag-wrapper {
+  margin-top: 0.5rem;
+}
+
+/* ============ Itinerary Content ============ */
 .itinerary-wrapper {
-  background: white;
+  background: var(--card-bg);
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  margin-top: 1.5rem;
 }
 
-/* Timeline Structure */
+/* ============ Timeline Structure ============ */
 .day-container {
   position: relative;
   padding-left: 2rem;
   margin-bottom: 2rem;
-  border-left: 2px solid #e4e7ed;
-}
+  border-left: 2px solid var(--border-color);
 
-.day-container:last-child {
-  margin-bottom: 0;
-}
+  &:last-child {
+    margin-bottom: 0;
+  }
 
-.day-container::before {
-  content: '';
-  position: absolute;
-  left: -7px;
-  top: 0;
-  width: 12px;
-  height: 12px;
-  background: #4f46e5;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+  &::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+  }
 }
 
 .day-wrapper {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-color);
   margin-bottom: 1.5rem;
   padding-left: 0.5rem;
 }
@@ -371,65 +407,92 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .agenda-item-wrapper {
-  transition: transform 0.2s ease;
+  transition: transform var(--transition);
+
+  &:hover {
+    transform: translateY(-2px);
+  }
 }
 
-.agenda-item-wrapper:hover {
-  transform: translateY(-2px);
-}
-
-/* Custom Tag Styles */
-.el-tag.purple {
-  background: #f3f4ff;
-  color: #4f46e5;
-  border-color: #e0e7ff;
-  padding: 12px 20px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.el-tag.purple.clickable:hover {
-  background: #4f46e5;
-  color: white;
-  cursor: pointer;
-}
-
-/* Form Fields */
+/* ============ Form Fields ============ */
 .itinerary-overview-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
-  margin-top: 0.25rem;
+  margin-top: 1.5rem;
 }
 
 .date-config-container {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+/* ============ Custom Tag Styles ============ */
+.el-tag {
+  &.clickable {
+    cursor: pointer;
+    transition: all var(--transition);
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  &.purple {
+    background: #f3f4ff;
+    color: var(--primary-color);
+    border-color: #e0e7ff;
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+
+    &.clickable:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+  }
+}
+
+/* ============ Responsive Design ============ */
+@media (max-width: 800px) {
   .page-container {
     padding: 1rem;
   }
 
   .session-header {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 
   .itinerary-wrapper {
-    padding: 1rem;
+    padding: 1.25rem;
   }
 
   .day-container {
-    padding-left: 1rem;
+    padding-left: 1.5rem;
   }
 
   .itinerary-overview-container {
     grid-template-columns: 1fr;
+  }
+
+  .session-title-container,
+  .session-title-input {
+    font-size: 1.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .title-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .tag-wrapper {
+    align-self: flex-start;
   }
 }
 </style>

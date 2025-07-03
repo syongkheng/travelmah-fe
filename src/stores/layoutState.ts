@@ -1,11 +1,13 @@
-import { reactive, ref } from 'vue'
+import { reactive } from 'vue'
 import { defineStore } from 'pinia'
 
 export const useLayoutStateStore = defineStore('layoutStateStore', () => {
-  const sideNav = {
-    isExpanded: ref(false),
-    toggle: () => (sideNav.isExpanded.value = !sideNav.isExpanded.value),
-  }
+  const sideNav = reactive({
+    isExpanded: true,
+    setTrue: () => (sideNav.isExpanded = true),
+    setFalse: () => (sideNav.isExpanded = false),
+    toggle: () => (sideNav.isExpanded = !sideNav.isExpanded),
+  })
 
   const loginDialog = reactive({
     isVisible: false,
