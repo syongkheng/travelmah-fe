@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onBeforeUnmount, ref, watch, type PropType } from 'vue'
+import { computed, onBeforeUnmount, ref, watch, type PropType } from 'vue'
 import { FolderChecked, Delete } from '@element-plus/icons-vue'
 import type { AgendaItem } from '@/interfaces/AgendaItem'
 import { useItineraryStore } from '@/stores/itinerary'
@@ -7,6 +7,11 @@ import { storeToRefs } from 'pinia'
 import { ListUtils } from '@/utilities/ListUtils'
 import { FileWithPreview } from '@/interfaces/FileWithPreview'
 import { FileUtils } from '@/utilities/FileUtils'
+import { useBreakpointManager } from '@/composables/useBreakpointManager'
+import { Breakpoint } from '@/constants/Breakpoint'
+
+const { isScreensizeBelow } = useBreakpointManager()
+const isMobile = computed(() => isScreensizeBelow(Breakpoint.M))
 
 const props = defineProps({
   isOpen: {
@@ -111,7 +116,6 @@ const handleFileUpload = (event: Event) => {
     const fileToBeAdded = new FileWithPreview(file)
     const blobString = await FileUtils.convertFileToBase64(file)
 
-    // Create new array references for reactivity
     agendaItemToBeAdded.value.files = [
       ...agendaItemToBeAdded.value.files,
       { ...fileToBeAdded, blob: blobString }
@@ -141,7 +145,6 @@ const onAgendaTimingSelection = (timing: string[]) => {
   agendaItemToBeAdded.value.durationInHours = Number(
     (durationMs / (1000 * 60 * 60)).toFixed(1)
   )
-
   agendaItemToBeAdded.value.durationTimingRaw = timing
   agendaItemToBeAdded.value.startTime = new Date(timing[0]).getTime()
   agendaItemToBeAdded.value.endTime = new Date(timing[1]).getTime()
@@ -158,7 +161,6 @@ const onUnknownTimeToggle = () => {
 const handleFileDeletion = (index: number) => {
   const idToDelete = agendaItemToBeAdded.value.files[index].uuid;
   if (idToDelete) {
-    // Create a new array reference to ensure reactivity
     agendaItemToBeAdded.value._fileIdsToDelete = [
       ...(agendaItemToBeAdded.value._fileIdsToDelete || []),
       idToDelete
@@ -177,18 +179,19 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <el-dialog :model-value="isOpen" @close="onClose" align-center>
+  <el-dialog :model-value="isOpen" @close="onClose" :fullscreen="isMobile" :class="{ 'mobile-dialog': isMobile }"
+    :align-center="!isMobile">
     <div class="form-wrapper">
       <div class="overview-container">
-        <div class="top-down-container">
-          <span>{{ "Title" }}</span>
+        <div class="top-down-container title-container">
+          <span class="field-label">{{ "Title" }}</span>
           <el-input v-model="agendaItemToBeAdded.title" class="title-wrapper" :validate-event="false"
-            placeholder="Title" />
+            placeholder="Title" :size="isMobile ? 'large' : 'default'" />
         </div>
-        <div class="top-down-container">
-          <span>Day #</span>
+        <div class="top-down-container day-container">
+          <span class="field-label">Day #</span>
           <el-select v-model="agendaItemToBeAdded.day" class="day-selector" placeholder="Select day"
-            :disabled="itinerary.durationInDays === 1">
+            :disabled="itinerary.durationInDays === 1" :size="isMobile ? 'large' : 'default'">
             <el-option v-for="day in itinerary.durationInDays" :key="day" :label="`Day ${day}`" :value="day" />
           </el-select>
         </div>
@@ -199,25 +202,28 @@ onBeforeUnmount(() => {
         <div class="top-down-container">
           <span class="field-label">{{ "Location" }}</span>
           <el-input v-model="agendaItemToBeAdded.location" class="inline-edit-desc" placeholder="Location"
-            :validate-event="false" />
+            :validate-event="false" :size="isMobile ? 'large' : 'default'" />
         </div>
         <div class="top-down-container">
           <span class="field-label">{{ "Description" }}</span>
           <el-input v-model="agendaItemToBeAdded.desc" type="textarea" class="inline-edit-desc"
-            :autosize="{ minRows: 2 }" placeholder="Reminders" :validate-event="false" />
+            :autosize="{ minRows: 2 }" placeholder="Reminders" :validate-event="false"
+            :size="isMobile ? 'large' : 'default'" />
         </div>
-        <div>
+        <div class="time-container">
           <div class="top-down-container" v-if="!agendaItemToBeAdded.unknownTime">
             <span class="field-label">Duration:</span>
             <el-time-picker v-model="agendaItemToBeAdded.durationTimingRaw" is-range range-separator="To"
               start-placeholder="Start time" end-placeholder="End time" :disabled-seconds="disabledSeconds"
-              @change="onAgendaTimingSelection" />
+              @change="onAgendaTimingSelection" :size="isMobile ? 'large' : 'default'" />
           </div>
           <div class="top-down-container" v-if="agendaItemToBeAdded.unknownTime">
             <span class="field-label">Duration (hours):</span>
-            <el-input-number v-model="agendaItemToBeAdded.durationInHours" :precision="1" :step="0.1" :max="1000" />
+            <el-input-number v-model="agendaItemToBeAdded.durationInHours" :precision="1" :step="0.1" :max="1000"
+              :controls="!isMobile" :size="isMobile ? 'large' : 'default'" />
           </div>
-          <el-checkbox v-model="agendaItemToBeAdded.unknownTime" @change="onUnknownTimeToggle">
+          <el-checkbox v-model="agendaItemToBeAdded.unknownTime" @change="onUnknownTimeToggle"
+            :size="isMobile ? 'large' : 'default'">
             No exact time yet
           </el-checkbox>
         </div>
@@ -228,7 +234,8 @@ onBeforeUnmount(() => {
         <div v-for="(file, index) in agendaItemToBeAdded.files" :key="file.uuid" class="preview-item">
           <img :src="file.blob" class="preview-image" :alt="file.name" />
           <div class="preview-overlay">
-            <el-button type="danger" :icon="Delete" circle @click="handleFileDeletion(index)" />
+            <el-button type="danger" :icon="Delete" circle @click="handleFileDeletion(index)"
+              :size="isMobile ? 'large' : 'default'" />
           </div>
         </div>
 
@@ -243,7 +250,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="button-wrapper">
-        <el-button type="primary" :icon="FolderChecked" @click="handleSave">
+        <el-button type="primary" :icon="FolderChecked" @click="handleSave" :size="isMobile ? 'large' : 'default'">
           Save
         </el-button>
       </div>
@@ -252,53 +259,84 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Keep your existing styles here */
-.optional-field-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+/* ============ Base Variables ============ */
+:root {
+  --primary-color: #4f46e5;
+  --text-color: #1a1a1a;
+  --bg-color: #f8fafc;
+  --card-bg: white;
+  --border-color: #e4e7ed;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --transition: 0.2s ease;
 }
 
+:deep(.el-divider--horizontal) {
+  margin: 0;
+}
+
+/* ============ Base Layout ============ */
 .form-wrapper {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
 }
 
 .overview-container {
   display: flex;
-  flex-direction: row;
-  width: 100%;
   gap: 1.25rem;
+  width: 100%;
 }
 
 .top-down-container {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+  flex-grow: 1;
+}
+
+.field-label {
+  font-size: 0.875rem;
+  color: var(--el-text-color-secondary);
+  font-weight: 500;
 }
 
 .title-wrapper {
-  width: 300px;
+  width: 100%;
 }
 
 .day-selector {
-  width: 100px;
+  width: 100%;
 }
 
+/* ============ Optional Fields ============ */
+.optional-field-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.time-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ============ Image Upload ============ */
 .preview-container {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-top: 1rem;
 }
 
 .preview-item,
 .upload-trigger {
   width: 100px;
   height: 100px;
-  border: 2px dashed #e2e8f0;
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
   position: relative;
   overflow: hidden;
 }
@@ -308,24 +346,24 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f8fafc;
+  background: var(--bg-color);
   cursor: pointer;
 }
 
 .upload-trigger:hover {
-  border-color: #6366f1;
-  background: #f0f2ff;
+  border-color: var(--primary-color);
+  background: rgba(79, 70, 229, 0.05);
 }
 
 .plus-icon {
   font-size: 1.5rem;
   font-weight: 300;
-  color: #6366f1;
+  color: var(--primary-color);
 }
 
 .upload-text {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
 
@@ -343,21 +381,67 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--transition);
 }
 
 .preview-item:hover .preview-overlay {
   opacity: 1;
 }
 
+/* ============ Buttons ============ */
 .button-wrapper {
   display: flex;
-  flex-direction: row-reverse;
-  gap: 1rem;
-  margin-top: 1.75rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
 }
 
 .el-button {
-  width: 125px;
+  min-width: 120px;
+}
+
+/* ============ Mobile Styles ============ */
+@media (max-width: 768px) {
+  .mobile-dialog {
+    .el-dialog__body {
+      padding: 20px;
+    }
+  }
+
+  .overview-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .title-wrapper,
+  .day-selector {
+    width: 100%;
+  }
+
+  .preview-item,
+  .upload-trigger {
+    width: 80px;
+    height: 80px;
+  }
+
+  .button-wrapper {
+    margin-top: 1.5rem;
+  }
+
+  .el-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .preview-item,
+  .upload-trigger {
+    width: 70px;
+    height: 70px;
+  }
+
+  .optional-field-container {
+    gap: 1.5rem;
+  }
 }
 </style>

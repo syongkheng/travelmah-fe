@@ -89,7 +89,6 @@ const handleShareItinerary = async (shortCode: string) => {
 
     ElMessage.success('Link copied to clipboard!');
   } catch (error) {
-    // Show error feedback
     ElMessage.error('Failed to copy link');
     console.error('Copy failed:', error);
   }
@@ -141,7 +140,6 @@ const saveItinerary = async () => {
         style: "margin: 0; color: #606266; font-size: 14px; line-height: 1.5;"
       }, 'Your itinerary has been created, view it, share it, or edit it!'),
 
-      // View Button (Top Row)
       h(ElButton, {
         type: "primary",
         icon: View,
@@ -180,9 +178,7 @@ const saveItinerary = async () => {
       ])
     ])
   });
-
 }
-
 
 onMounted(() => {
   itineraryStore.setSessionId(sessionId as string)
@@ -198,63 +194,66 @@ onBeforeUnmount(() => {
   <div class="page-container">
     <header class="session-header">
       <div class="title-container">
-        <div class="itinerary-details-header-container" :class="{ 'mobile-layout': isMobile }">
-          <div>
+        <div class="itinerary-details-header-container">
+          <div class="title-and-actions">
             <span v-if="toggleEditingTitle">
               <el-input v-model="itinerary.sessionTitle" class="session-title-input" :validate-event="false"
-                @blur="toggleEditingTitle = false" />
+                @blur="toggleEditingTitle = false" :size="isMobile ? 'large' : 'default'" />
             </span>
             <span class="session-title-container" v-else @click="toggleEditingTitle = true">
               <el-tooltip class="box-item" effect="dark" content="Edit itinerary name" placement="top">
-                <span>
+                <span class="title-text">
                   {{ itinerary.sessionTitle }}
                 </span>
               </el-tooltip>
             </span>
-          </div>
-          <div>
             <el-tooltip class="box-item" effect="dark" content="Save Itinerary" placement="top">
               <el-button :icon="DocumentAdd" circle type="primary" @click="saveItinerary"
-                :disabled="isCreateAgendaButtonDisabled" />
+                :disabled="isCreateAgendaButtonDisabled" class="save-button" :size="isMobile ? 'large' : 'default'" />
             </el-tooltip>
           </div>
         </div>
         <div class="tag-wrapper">
-          <el-tag class="clickable" type="danger" @click="openNotification">
-            {{ 'Itinerary uneditable by others' }}
+          <el-tag class="clickable privacy-tag" type="danger" @click="openNotification"
+            :size="isMobile ? 'large' : 'default'">
+            {{ 'Collaborator list' }}
           </el-tag>
         </div>
       </div>
       <div class="itinerary-overview-container">
         <div class="itinerary-config-field">
-          <el-cascader placeholder="Where are you going?" v-model="itinerary.destinationRaw"
-            :options="hierarchicalLocations" style="width: 100%" />
+          <el-cascader :placeholder="isMobile ? 'Destination' : 'Where are you going?'"
+            v-model="itinerary.destinationRaw" :options="hierarchicalLocations" style="width: 100%"
+            :size="isMobile ? 'large' : 'default'" />
         </div>
         <div class="date-config-container">
           <span class="itinerary-config-field">
             <el-date-picker v-model="itinerary.itineraryDateRaw" type="daterange" range-separator="to"
-              style="width: 100%;" start-placeholder="Depature date" end-placeholder="Return date"
-              :disabled="itinerary.unknownDate" @change="itineraryStore.onItineraryDateSelection"
-              v-if="!itinerary.unknownDate" />
+              style="width: 100%;" :start-placeholder="isMobile ? 'From' : 'Depature date'"
+              :end-placeholder="isMobile ? 'To' : 'Return date'" :disabled="itinerary.unknownDate"
+              @change="itineraryStore.onItineraryDateSelection" v-if="!itinerary.unknownDate"
+              :size="isMobile ? 'large' : 'default'" />
           </span>
-          <span class="itinerary-config-field">
-            <el-input-number v-model="itinerary.durationInDays" :min="1" :disabled="!itinerary.unknownDate"
-              v-if="itinerary.unknownDate" style="width: 100%;">
+          <span class="itinerary-config-field" v-if="itinerary.unknownDate">
+            <el-input-number v-model="itinerary.durationInDays" :min="1" :controls="!isMobile" style="width: 100%;"
+              :size="isMobile ? 'large' : 'default'">
               <template #suffix>
-                <span>{{ "day(s)" }}</span>
+                <span class="input-suffix">{{ "day(s)" }}</span>
               </template>
             </el-input-number>
           </span>
-          <span>
-            <el-checkbox v-model="itinerary.unknownDate" @change="handleUnknownDateToggle">
-              {{ "No exact dates yet" }}
+          <span class="unknown-date-toggle">
+            <el-checkbox v-model="itinerary.unknownDate" @change="handleUnknownDateToggle"
+              :size="isMobile ? 'large' : 'default'">
+              {{ isMobile ? "No dates" : "No exact dates yet" }}
             </el-checkbox>
           </span>
         </div>
         <div class="itinerary-config-field">
-          <el-input-number v-model="itinerary.numberOfPax" :min="1" style="width: 100%;">
+          <el-input-number v-model="itinerary.numberOfPax" :min="1" style="width: 100%;" :controls="!isMobile"
+            :size="isMobile ? 'large' : 'default'">
             <template #suffix>
-              <span>{{ "travellers(s)" }}</span>
+              <span class="input-suffix">{{ isMobile ? "person(s)" : "traveller(s)" }}</span>
             </template>
           </el-input-number>
         </div>
@@ -272,14 +271,16 @@ onBeforeUnmount(() => {
             <AgendaCard :agendaItem="agendaItem" :onClick="() => handleOnTagSelection(agendaItem)"
               :onDelete="handleTagClose" :closeable="true" />
           </div>
-          <el-tag type="primary" class="clickable" @click="handleAddAnActivity(day)">
-            <div class="tag-wrapper">
-              <el-icon>
+          <el-tag type="primary" class="add-activity-tag" @click="handleAddAnActivity(day)"
+            :size="isMobile ? 'large' : 'default'">
+            <div class="add-activity-content">
+              <el-icon class="add-icon">
                 <Plus />
               </el-icon>
-              <span style="margin-left: 0.5rem">{{ "Add Activity" }}</span>
+              <span class="add-text">Add Activity</span>
             </div>
           </el-tag>
+
         </div>
       </div>
     </div>
@@ -290,8 +291,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* ============ Base Styles ============ */
-.page-container {
+/* ============ CSS Variables ============ */
+:root {
   --primary-color: #4f46e5;
   --text-color: #1a1a1a;
   --bg-color: #f8fafc;
@@ -301,7 +302,10 @@ onBeforeUnmount(() => {
   --radius-md: 12px;
   --radius-sm: 8px;
   --transition: 0.2s ease;
+}
 
+/* ============ Base Layout ============ */
+.page-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -309,7 +313,7 @@ onBeforeUnmount(() => {
   background: var(--bg-color);
 }
 
-/* ============ Header Section ============ */
+/* ============ Header Styles ============ */
 .session-header {
   background: var(--card-bg);
   padding: 1.5rem;
@@ -319,26 +323,22 @@ onBeforeUnmount(() => {
 
 .title-container {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .itinerary-details-header-container {
   display: flex;
   gap: 1.25rem;
   align-items: center;
+}
 
-  &.mobile-layout {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-
-    >div:last-child {
-      align-self: flex-end;
-    }
-  }
+.title-and-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
 }
 
 .session-title-container {
@@ -346,10 +346,18 @@ onBeforeUnmount(() => {
   font-weight: 600;
   color: var(--text-color);
   cursor: pointer;
+  flex-grow: 1;
 
   &:hover {
     text-decoration: underline;
   }
+}
+
+.title-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .session-title-input {
@@ -358,7 +366,14 @@ onBeforeUnmount(() => {
 }
 
 .tag-wrapper {
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
+  gap: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.privacy-tag {
+  width: fit-content;
 }
 
 /* ============ Itinerary Content ============ */
@@ -370,7 +385,7 @@ onBeforeUnmount(() => {
   margin-top: 1.5rem;
 }
 
-/* ============ Timeline Structure ============ */
+/* ============ Timeline Styles ============ */
 .day-container {
   position: relative;
   padding-left: 2rem;
@@ -418,6 +433,49 @@ onBeforeUnmount(() => {
   }
 }
 
+/* ============ Add Activity Tag ============ */
+.add-activity-tag {
+  --add-tag-bg: rgba(64, 158, 255, 0.08);
+  --add-tag-hover-bg: rgba(64, 158, 255, 0.15);
+
+  cursor: pointer;
+  transition: all var(--transition);
+  background: var(--add-tag-bg);
+  color: var(--el-color-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-sm);
+  width: 100%;
+  max-width: 200px;
+  margin-top: 0.5rem;
+
+  &:hover {
+    background: var(--add-tag-hover-bg);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .add-activity-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+  }
+
+  .add-icon {
+    font-size: 1rem;
+    transition: transform var(--transition);
+    color: var(--el-color-primary);
+    margin-right: 0.25rem;
+  }
+
+  &:hover .add-icon {
+    transform: scale(1.1);
+  }
+}
+
 /* ============ Form Fields ============ */
 .itinerary-overview-container {
   display: grid;
@@ -432,67 +490,91 @@ onBeforeUnmount(() => {
   gap: 1rem;
 }
 
-/* ============ Custom Tag Styles ============ */
-.el-tag {
-  &.clickable {
-    cursor: pointer;
-    transition: all var(--transition);
-
-    &:hover {
-      opacity: 0.9;
-    }
-  }
-
-  &.purple {
-    background: #f3f4ff;
-    color: var(--primary-color);
-    border-color: #e0e7ff;
-    padding: 12px 20px;
-    border-radius: var(--radius-sm);
-
-    &.clickable:hover {
-      background: var(--primary-color);
-      color: white;
-    }
-  }
+.itinerary-config-field {
+  width: 100%;
 }
 
-/* ============ Responsive Design ============ */
-@media (max-width: 800px) {
+.unknown-date-toggle {
+  margin-top: -0.5rem;
+}
+
+.input-suffix {
+  font-size: 0.9rem;
+  color: var(--el-text-color-secondary);
+}
+
+/* ============ Responsive Styles ============ */
+@media (max-width: 768px) {
   .page-container {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .session-header {
-    padding: 1.25rem;
+    padding: 1rem;
   }
 
-  .itinerary-wrapper {
-    padding: 1.25rem;
+  .title-and-actions {
+    gap: 0.75rem;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .day-container {
-    padding-left: 1.5rem;
+  .title-text {
+    font-size: 1.4rem;
+    line-height: 1.3;
+  }
+
+  .session-title-input {
+    font-size: 1.4rem !important;
+  }
+
+  .privacy-tag {
+    width: 100%;
+    justify-content: center;
   }
 
   .itinerary-overview-container {
     grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
   }
 
-  .session-title-container,
-  .session-title-input {
-    font-size: 1.5rem !important;
+  .day-container {
+    padding-left: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .day-wrapper {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .agenda-items-container {
+    gap: 0.75rem;
+  }
+
+  .add-activity-tag {
+    max-width: 100%;
+    padding: 1rem;
+    margin-top: 0.75rem;
+
+    .add-activity-content {
+      font-size: 1rem;
+    }
   }
 }
 
-@media (max-width: 480px) {
-  .title-container {
-    flex-direction: column;
-    gap: 1rem;
+@media (max-width: 400px) {
+  .title-text {
+    font-size: 1.25rem;
   }
 
-  .tag-wrapper {
-    align-self: flex-start;
+  .session-header {
+    padding: 0.75rem;
+  }
+
+  .day-container {
+    padding-left: 1rem;
   }
 }
 </style>
