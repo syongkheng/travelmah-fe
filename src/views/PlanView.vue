@@ -33,13 +33,13 @@ const dayOfTriggeredTag = ref(1)
 const agendaItemToBeEdited = ref<AgendaItem>()
 
 const openNotification = () => {
-  console.log("Is Authenticated: ", authStore.isAuthenticated)
   if (authStore.isAuthenticated) {
     layoutStore.collabDialog.setTrue();
     return
   }
   console.log("Not authenticated flow.")
   ElMessage.warning("You must be logged in!")
+  authStore.setRedirectAfterLogin(false);
   layoutStore.loginDialog.setTrue();
   return;
 }
