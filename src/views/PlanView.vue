@@ -33,7 +33,15 @@ const dayOfTriggeredTag = ref(1)
 const agendaItemToBeEdited = ref<AgendaItem>()
 
 const openNotification = () => {
-  layoutStore.collabDialog.setTrue();
+  console.log("Is Authenticated: ", authStore.isAuthenticated)
+  if (authStore.isAuthenticated) {
+    layoutStore.collabDialog.setTrue();
+    return
+  }
+  console.log("Not authenticated flow.")
+  ElMessage.warning("You must be logged in!")
+  layoutStore.loginDialog.setTrue();
+  return;
 }
 
 const handleAddAnActivity = (day: number) => {
@@ -382,7 +390,6 @@ onBeforeUnmount(() => {
   padding: 2rem;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
-  margin-top: 1.5rem;
 }
 
 /* ============ Timeline Styles ============ */
@@ -562,6 +569,10 @@ onBeforeUnmount(() => {
       font-size: 1rem;
     }
   }
+}
+
+:deep(.el-divider--horizontal) {
+  margin: 0;
 }
 
 @media (max-width: 400px) {

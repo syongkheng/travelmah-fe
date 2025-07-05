@@ -23,13 +23,8 @@
         <h3 class="step-heading">{{ step.heading }}</h3>
         <div class="step-infographic">
           <div class="step-description">{{ step.description }}</div>
-          <el-button
-            :key="step.cta.label"
-            v-if="step.cta"
-            @click="step.cta.handler"
-            :icon="step.cta.icon ?? Pointer"
-            :type="step.cta.variant"
-          >
+          <el-button :key="step.cta.label" v-if="step.cta" @click="step.cta.handler" :icon="step.cta.icon ?? Pointer"
+            :type="step.cta.variant">
             {{ step.cta.label }}
           </el-button>
         </div>
@@ -118,6 +113,7 @@ const steps: Step[] = [
   height: 60px;
   border-radius: 50%;
   background: #fff;
+  border: 1px solid #eee;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -151,6 +147,10 @@ const steps: Step[] = [
   button {
     margin-top: 1em;
   }
+}
+
+.default-icon {
+  color: var(--homepage-svg-icon);
 }
 
 /* Optional: Last step shouldn't have bottom margin */
