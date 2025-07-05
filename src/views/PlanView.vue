@@ -196,6 +196,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handleBrowserUnload)
 })
+
+const cascaderProps = {
+  checkStrictly: true,
+}
 </script>
 
 <template>
@@ -232,7 +236,7 @@ onBeforeUnmount(() => {
         <div class="itinerary-config-field">
           <el-cascader :placeholder="isMobile ? 'Destination' : 'Where are you going?'"
             v-model="itinerary.destinationRaw" :options="hierarchicalLocations" style="width: 100%"
-            :size="isMobile ? 'large' : 'default'" />
+            :size="isMobile ? 'large' : 'default'" :props="cascaderProps" />
         </div>
         <div class="date-config-container">
           <span class="itinerary-config-field">
