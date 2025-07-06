@@ -23,6 +23,19 @@ export const useItineraryStore = defineStore('itinerary', () => {
     _agendaIdsToUpdate: [],
   })
 
+  const resetItinerary = () => {
+    itinerary.id = undefined
+    itinerary.sessionTitle = 'Untitled Travel'
+    itinerary.sessionId = ''
+    itinerary.unknownDate = false
+    itinerary.durationInDays = 1
+    itinerary.numberOfPax = 1
+    itinerary.agendaItems = []
+    itinerary.destinationRaw = []
+    itinerary._agendaIdsToDelete = []
+    itinerary._agendaIdsToUpdate = []
+  }
+
   const createItinerary = async (): Promise<{
     isSuccess: boolean
     error: 'itinerary' | 'file' | 'auth' | undefined
@@ -364,6 +377,7 @@ export const useItineraryStore = defineStore('itinerary', () => {
     getLimitForFileUpload,
     createItinerary,
     retrieveItinerary,
+    resetItinerary,
     retrieveItineraryForUpdate,
     updateItinerary,
     addAgendaItemToItinerary,

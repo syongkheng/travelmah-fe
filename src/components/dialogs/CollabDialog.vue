@@ -1,45 +1,62 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { User, Plus, Close } from '@element-plus/icons-vue'
 import { useLayoutStateStore } from '@/stores/layoutState'
+import HttpClient from '@/interceptors/HttpClient'
+import { ApiRoute } from '@/constants/route'
+import { useItineraryStore } from '@/stores/itinerary'
+import { ElMessage, ElButton } from 'element-plus'
 
 const layoutStore = useLayoutStateStore()
-
-// State for the collaboration list
-const collabList = ref<string[]>([])
+const localCollabList = ref<string[]>([])
 const newCollabInput = ref('')
 const isLoading = ref(false)
+const itineraryStore = useItineraryStore()
 
-// Add a new collaborator
+
+const isItinerarySaved = computed(() => {
+  return !!itineraryStore.itinerary?.shortCode
+})
+
 const addCollaborator = () => {
-  if (newCollabInput.value.trim() && !collabList.value.includes(newCollabInput.value.trim())) {
-    collabList.value.push(newCollabInput.value.trim())
+  if (!isItinerarySaved.value) return
+  if (newCollabInput.value.trim() && !localCollabList.value.includes(newCollabInput.value.trim())) {
+    localCollabList.value.push(newCollabInput.value.trim())
     newCollabInput.value = ''
   }
 }
 
-// Remove a collaborator
 const removeCollaborator = (index: number) => {
-  collabList.value.splice(index, 1)
+  if (!isItinerarySaved.value) return
+  localCollabList.value.splice(index, 1)
 }
 
-// Submit the collaboration list
-const submitCollaborationList = () => {
+const submitCollaborationList = async () => {
+  if (!isItinerarySaved.value) {
+    ElMessage.error("Please save the itinerary first!")
+    return
+  }
+
   isLoading.value = true
-  // Here you would typically make an API call to save the collaboration list
-  console.log('Submitting collaboration list:', collabList.value)
-
-  // Simulate API call
-  setTimeout(() => {
-    isLoading.value = false
+  try {
+    await HttpClient.post(ApiRoute.ITINERARY.ADD_COLLABORATOR, {
+      username: localCollabList.value,
+      itineraryId: itineraryStore.itinerary.id
+    })
     layoutStore.collabDialog.toggle()
-  }, 1000)
+    localCollabList.value = []
+    ElMessage.success('Collaborators added successfully!')
+  } catch (err) {
+    console.error("Error adding collaborators:", err)
+    ElMessage.error('Failed to add collaborators')
+  } finally {
+    isLoading.value = false
+  }
 }
 
-// Handle dialog close
 const handleOnClose = () => {
   layoutStore.collabDialog.toggle()
-  collabList.value = []
+  localCollabList.value = []
   newCollabInput.value = ''
 }
 </script>
@@ -53,25 +70,34 @@ const handleOnClose = () => {
         <h3>Add Collaborators</h3>
       </div>
 
+      <!-- Warning message if itinerary isn't saved -->
+      <el-alert v-if="!isItinerarySaved" type="error" show-icon :closable="false" class="save-itinerary-first-warning">
+        Please save the itinerary before adding collaborators.
+      </el-alert>
+
       <!-- Main Content -->
       <div class="collab-form">
         <!-- Input for new collaborator -->
         <div class="collab-input-container">
           <el-input v-model="newCollabInput" placeholder="Enter username or email" :prefix-icon="User" clearable
-            @keyup.enter="addCollaborator" />
-          <el-button type="primary" :icon="Plus" @click="addCollaborator" :disabled="!newCollabInput.trim()" />
+            @keyup.enter="addCollaborator" :disabled="!isItinerarySaved" />
+          <el-tooltip content="Enter at least 1 collaborator to save" placement="top">
+            <el-button type="primary" :icon="Plus" @click="addCollaborator"
+              :disabled="!newCollabInput.trim() || !isItinerarySaved" />
+          </el-tooltip>
         </div>
 
         <!-- Collaborator list -->
-        <div class="collab-list" v-if="collabList.length > 0">
-          <div v-for="(collab, index) in collabList" :key="index" class="collab-item">
+        <div class="collab-list" v-if="localCollabList.length > 0">
+          <div v-for="(collab, index) in localCollabList" :key="index" class="collab-item">
             <span class="avatar-username-wrapper">
               <el-icon>
                 <User />
               </el-icon>
               <span>{{ collab }}</span>
             </span>
-            <el-button type="danger" :icon="Close" circle size="small" @click="removeCollaborator(index)" />
+            <el-button type="danger" :icon="Close" circle size="small" @click="removeCollaborator(index)"
+              :disabled="!isItinerarySaved" />
           </div>
         </div>
         <div v-else class="empty-state">
@@ -80,7 +106,7 @@ const handleOnClose = () => {
 
         <!-- Submit Button -->
         <el-button type="primary" class="submit-button" :loading="isLoading" size="default"
-          @click="submitCollaborationList" :disabled="collabList.length === 0">
+          @click="submitCollaborationList" :disabled="localCollabList.length === 0 || !isItinerarySaved">
           {{ isLoading ? 'Saving...' : 'Save Collaborators' }}
         </el-button>
 
@@ -94,6 +120,16 @@ const handleOnClose = () => {
 </template>
 
 <style lang="css" scoped>
+.save-itinerary-first-warning {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.save-itinerary-button {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
 .collab-dialog :deep(.el-dialog__body) {
   display: flex;
   justify-content: center;

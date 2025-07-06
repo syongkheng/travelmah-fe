@@ -38,7 +38,7 @@ const editingMode = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 
 const defaultAgendaItem = (): AgendaItem => ({
-  title: 'Untiltled Activity',
+  title: 'Untitled Activity',
   desc: '',
   location: '',
   durationInHours: 0,

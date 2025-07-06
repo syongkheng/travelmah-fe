@@ -6,42 +6,45 @@ import { hierarchicalLocations } from '@/interfaces/HierarchicalLocation'
 import { useItineraryStore } from '@/stores/itinerary'
 import { storeToRefs } from 'pinia'
 import type { AgendaItem } from '@/interfaces/AgendaItem'
-import { DocumentAdd, Plus, Refresh, Share, View } from '@element-plus/icons-vue'
+import { DocumentAdd, Plus, Refresh } from '@element-plus/icons-vue'
 import AgendaCard from '@/components/AgendaCard.vue'
 import { ElButton, ElMessage, ElNotification } from 'element-plus'
 import { GeneratorUtils } from '@/utilities/GeneratorUtils'
-import { useNav } from '@/hooks/useNav'
 import { useLayoutStateStore } from '@/stores/layoutState'
 import { useAuthenticationStore } from '@/stores/authentication'
-import { useBreakpointManager } from '@/composables/useBreakpointManager';
-import { Breakpoint } from '@/constants/Breakpoint';
+import { useBreakpointManager } from '@/composables/useBreakpointManager'
+import { Breakpoint } from '@/constants/Breakpoint'
+import { useItineraryActions } from '@/composables/useItineraryActions'
 
-const { isScreensizeBelow } = useBreakpointManager();
-const isMobile = computed(() => isScreensizeBelow(Breakpoint.M));
+const { isScreensizeBelow } = useBreakpointManager()
+const isMobile = computed(() => isScreensizeBelow(Breakpoint.M))
 const route = useRoute()
-const navigate = useNav()
 const sessionId = route.query.session?.toString()
-const toggleEditingTitle = ref(false);
-const isAddAgendaDialogVisible = ref(false);
-const isCreateAgendaButtonDisabled = ref(false);
+const toggleEditingTitle = ref(false)
+const isAddAgendaDialogVisible = ref(false)
+const isCreateAgendaButtonDisabled = ref(false)
 
-const itineraryStore = useItineraryStore();
-const authStore = useAuthenticationStore();
+const itineraryStore = useItineraryStore()
+const authStore = useAuthenticationStore()
 const { itinerary } = storeToRefs(itineraryStore)
-const layoutStore = useLayoutStateStore();
+const layoutStore = useLayoutStateStore()
 const dayOfTriggeredTag = ref(1)
 const agendaItemToBeEdited = ref<AgendaItem>()
 
+// Use the composable
+const {
+  saveItinerary: saveItineraryComposable,
+  showSuccessNotification
+} = useItineraryActions()
+
 const openNotification = () => {
   if (authStore.isAuthenticated) {
-    layoutStore.collabDialog.setTrue();
+    layoutStore.collabDialog.setTrue()
     return
   }
-  console.log("Not authenticated flow.")
   ElMessage.warning("You must be logged in!")
-  authStore.setRedirectAfterLogin(false);
-  layoutStore.loginDialog.setTrue();
-  return;
+  authStore.setRedirectAfterLogin(false)
+  layoutStore.loginDialog.setTrue()
 }
 
 const handleAddAnActivity = (day: number) => {
@@ -73,122 +76,48 @@ const handleBrowserUnload = (e: BeforeUnloadEvent) => {
 }
 
 const retrySubmittingItinerary = () => {
-  const newSessionId = GeneratorUtils.generateSessionID();
-  itinerary.value.sessionId = newSessionId;
-  const url = new URL(window.location.href);
-  url.searchParams.set('session', newSessionId);
-  window.history.replaceState(null, '', url.toString());
+  const newSessionId = GeneratorUtils.generateSessionID()
+  itinerary.value.sessionId = newSessionId
+  const url = new URL(window.location.href)
+  url.searchParams.set('session', newSessionId)
+  window.history.replaceState(null, '', url.toString())
   isCreateAgendaButtonDisabled.value = false
-  return;
 }
 
-const handleViewItinerary = (shortCode: string) => {
-  navigate.redirectToViewSessionId(shortCode)
-};
-
-const handleEditItinerary = (shortCode: string) => {
-  navigate.redirectToEditSessionId(shortCode)
-}
-
-const handleShareItinerary = async (shortCode: string) => {
-  try {
-    const shareUrl = `${import.meta.env.VITE_WEB_BASE_URL}/itinerary/${shortCode}`;
-    await navigator.clipboard.writeText(shareUrl);
-
-    ElMessage.success('Link copied to clipboard!');
-  } catch (error) {
-    ElMessage.error('Failed to copy link');
-    console.error('Copy failed:', error);
-  }
-};
-
+// Updated saveItinerary function using the composable
 const saveItinerary = async () => {
-  isCreateAgendaButtonDisabled.value = true;
-  const { isSuccess, error, shortCode } = await itineraryStore.createItinerary()
-  if (!isSuccess && error === 'auth') {
-    ElNotification({
-      title: "Session Expired",
-      type: "error",
-      duration: 3000,
-      message: "Please login again."
-    })
-    authStore.setRedirectAfterLogin(false)
-    layoutStore.loginDialog.setTrue()
-    return;
-  }
-  if ((!isSuccess && error !== undefined) || shortCode === undefined) {
+  isCreateAgendaButtonDisabled.value = true
+  const { success, shortCode, error } = await saveItineraryComposable()
+
+  if (!success && error) {
     const failureNotification = ElNotification({
       title: "Submission Failed",
       type: "error",
       duration: 0,
       message: () => h('div', { class: 'notification-content' }, [
-        h('p', { class: 'notification-error-description', }, 'Something went wrong, please try again.'),
+        h('p', { class: 'notification-error-description' }, 'Something went wrong, please try again.'),
         h(ElButton, {
           type: "primary",
           class: "retry-button",
           icon: Refresh,
           loading: false,
-          onclick: () => {
-            failureNotification.close();
-            retrySubmittingItinerary();
+          onClick: () => {
+            failureNotification.close()
+            retrySubmittingItinerary()
           }
         }, ' Retry Submission')
       ])
-    });
-    return;
+    })
+    return
   }
-  const successNotification = ElNotification({
-    title: "Submitted Successfully",
-    type: "success",
-    duration: 0,
-    message: () => h('div', {
-      style: "display: flex; flex-direction: column; gap: 12px; padding: 5px 0;"
-    }, [
-      h('p', {
-        style: "margin: 0; color: #606266; font-size: 14px; line-height: 1.5;"
-      }, 'Your itinerary has been created, view it, share it, or edit it!'),
 
-      h(ElButton, {
-        type: "primary",
-        icon: View,
-        style: "width: 100%; background-color: #409eff;",
-        onclick: () => {
-          successNotification.close();
-          handleViewItinerary(shortCode);
-          isCreateAgendaButtonDisabled.value = false;
-        }
-      }, ' View Itinerary'),
-
-      h('div', {
-        style: "display: flex; gap: 10px; width: 100%;"
-      }, [
-        h(ElButton, {
-          type: "success",
-          icon: Share,
-          style: "flex: 1; background-color: #67c23a; min-width: 0;",
-          onclick: () => {
-            successNotification.close();
-            handleShareItinerary(shortCode);
-            isCreateAgendaButtonDisabled.value = false;
-          }
-        }, ' Share'),
-
-        h(ElButton, {
-          type: "info",
-          icon: Refresh,
-          style: "flex: 1; background-color: #909399; min-width: 0;",
-          onclick: () => {
-            successNotification.close();
-            handleEditItinerary(shortCode);
-            isCreateAgendaButtonDisabled.value = false;
-          }
-        }, ' Edit')
-      ])
-    ])
-  });
+  if (success && shortCode) {
+    showSuccessNotification(shortCode)
+  }
 }
 
 onMounted(() => {
+  itineraryStore.resetItinerary()
   itineraryStore.setSessionId(sessionId as string)
   window.addEventListener('beforeunload', handleBrowserUnload)
 })
@@ -201,6 +130,7 @@ const cascaderProps = {
   checkStrictly: true,
 }
 </script>
+
 
 <template>
   <div class="page-container">
@@ -239,12 +169,11 @@ const cascaderProps = {
             :size="isMobile ? 'large' : 'default'" :props="cascaderProps" />
         </div>
         <div class="date-config-container">
-          <span class="itinerary-config-field">
+          <span class="itinerary-config-field" v-if="itinerary.unknownDate">
             <el-date-picker v-model="itinerary.itineraryDateRaw" type="daterange" range-separator="to"
               style="width: 100%;" :start-placeholder="isMobile ? 'From' : 'Depature date'"
               :end-placeholder="isMobile ? 'To' : 'Return date'" :disabled="itinerary.unknownDate"
-              @change="itineraryStore.onItineraryDateSelection" v-if="!itinerary.unknownDate"
-              :size="isMobile ? 'large' : 'default'" />
+              @change="itineraryStore.onItineraryDateSelection" :size="isMobile ? 'large' : 'default'" />
           </span>
           <span class="itinerary-config-field" v-if="itinerary.unknownDate">
             <el-input-number v-model="itinerary.durationInDays" :min="1" :controls="!isMobile" style="width: 100%;"
