@@ -169,7 +169,7 @@ const cascaderProps = {
             :size="isMobile ? 'large' : 'default'" :props="cascaderProps" />
         </div>
         <div class="date-config-container">
-          <span class="itinerary-config-field" v-if="itinerary.unknownDate">
+          <span class="itinerary-config-field" v-if="!itinerary.unknownDate">
             <el-date-picker v-model="itinerary.itineraryDateRaw" type="daterange" range-separator="to"
               style="width: 100%;" :start-placeholder="isMobile ? 'From' : 'Depature date'"
               :end-placeholder="isMobile ? 'To' : 'Return date'" :disabled="itinerary.unknownDate"
