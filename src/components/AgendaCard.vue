@@ -29,10 +29,14 @@ defineProps({
 
 <template>
   <div class="agenda-card" @click.stop="$emit('click', agendaItem)">
-    <div class="time-pill">
-      {{ DateUtils.extractReadableTimeFromTimestampWithFormat(agendaItem.startTime, "12h") }}
-      <span class="time-separator">→</span>
-      {{ DateUtils.extractReadableTimeFromTimestampWithFormat(agendaItem.endTime, "12h") }}
+    <div class="time-info">
+
+      <div class="time-pill" v-if="!agendaItem.unknownTime">
+        {{ DateUtils.extractReadableTimeFromTimestampWithFormat(agendaItem.startTime, "12h") }}
+        <span class="time-separator">→</span>
+        {{ DateUtils.extractReadableTimeFromTimestampWithFormat(agendaItem.endTime, "12h") }}
+      </div>
+      <div class="time-pill" v-else> {{ agendaItem.durationInHours ?? 0.0 }} {{ "h" }}</div>
     </div>
     <div class="title-wrapper">
       <h3 class="title">{{ agendaItem.title }}</h3>
@@ -53,6 +57,11 @@ defineProps({
 </template>
 
 <style scoped>
+.time-info {
+  display: flex;
+  flex-direction: column;
+}
+
 .title-wrapper {
   display: flex;
   justify-content: space-between;
