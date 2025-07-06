@@ -18,10 +18,28 @@ const isItinerarySaved = computed(() => {
   return !!itineraryStore.itinerary?.shortCode
 })
 
+const validateEmail = (email: string) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return re.test(email)
+}
+
+const isEmailValid = computed(() => {
+  return newCollabInput.value.trim() === '' || validateEmail(newCollabInput.value.trim())
+})
+
 const addCollaborator = () => {
   if (!isItinerarySaved.value) return
-  if (newCollabInput.value.trim() && !localCollabList.value.includes(newCollabInput.value.trim())) {
-    localCollabList.value.push(newCollabInput.value.trim())
+
+  const input = newCollabInput.value.trim()
+  if (!input) return
+
+  if (!validateEmail(input)) {
+    ElMessage.warning('Please enter a valid email address')
+    return
+  }
+
+  if (!localCollabList.value.includes(input)) {
+    localCollabList.value.push(input)
     newCollabInput.value = ''
   }
 }
@@ -80,11 +98,15 @@ const handleOnClose = () => {
         <!-- Input for new collaborator -->
         <div class="collab-input-container">
           <el-input v-model="newCollabInput" placeholder="Enter username or email" :prefix-icon="User" clearable
-            @keyup.enter="addCollaborator" :disabled="!isItinerarySaved" />
+            @keyup.enter="addCollaborator" :disabled="!isItinerarySaved"
+            :class="{ 'is-error': newCollabInput.trim() && !isEmailValid }" />
           <el-tooltip content="Enter at least 1 collaborator to save" placement="top">
             <el-button type="primary" :icon="Plus" @click="addCollaborator"
-              :disabled="!newCollabInput.trim() || !isItinerarySaved" />
+              :disabled="!newCollabInput.trim() || !isItinerarySaved || !isEmailValid" />
           </el-tooltip>
+        </div>
+        <div v-if="newCollabInput.trim() && !isEmailValid" class="error-message">
+          Please enter a valid email address
         </div>
 
         <!-- Collaborator list -->
@@ -112,7 +134,7 @@ const handleOnClose = () => {
 
         <el-divider />
         <div class="disclaimer">
-          Add people by their username or email address. They'll receive an invitation to collaborate.
+          Add people by their email address. They'll be able to collaborate if they are logged in.
         </div>
       </div>
     </div>
@@ -205,5 +227,15 @@ const handleOnClose = () => {
   align-items: center;
   font-size: 1.05em;
   gap: 1rem;
+}
+
+:deep(.el-input.is-error .el-input__wrapper) {
+  box-shadow: 0 0 0 1px var(--el-color-danger) inset;
+}
+
+.error-message {
+  color: var(--el-color-danger);
+  font-size: 12px;
+  margin-top: 4px;
 }
 </style>
