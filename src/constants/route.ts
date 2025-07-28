@@ -2,6 +2,7 @@ export const ApiRoute = {
   PROFILE: {
     INFO: `/api/profile/info`,
     RECENT_SEARCHES: `/api/profile/recent-search`,
+    SELF: `/api/profile/`,
   },
   AUTHENTICATE: {
     REGISTER: `/api/auth/register`,
@@ -19,5 +20,10 @@ export const ApiRoute = {
   FILE: {
     CREATE: `/api/file`,
     DELETE: `/api/file/delete`,
+  },
+  PFP: {
+    REPLACE: `/api/pfp`,
+    REMOVE: `/api/pfp/remove`,
+    RETRIEVE: `/api/pfp`,
   },
 }

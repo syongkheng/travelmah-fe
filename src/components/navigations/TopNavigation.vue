@@ -8,7 +8,7 @@ import { useAuthenticationStore } from '@/stores/authentication'
 import { storeToRefs } from 'pinia'
 
 
-const { redirectToPlanning, redirectToLanding, redirectToDashboard } = useNav()
+const { redirectToPlanning, redirectToLanding, redirectToDashboard, redirectToProfile } = useNav()
 const searchInput = ref<string>('')
 const layoutStore = useLayoutStateStore()
 const navigate = useNav();
@@ -57,7 +57,7 @@ const handleSearchItinerary = () => {
           </el-button>
         </span>
         <span v-if="isAuthenticated">
-          <el-button @click="() => console.log('hi')" type="primary" :icon="Avatar">
+          <el-button @click="redirectToProfile" type="primary" :icon="Avatar">
             <span> {{ 'Profile' }}</span>
           </el-button>
 

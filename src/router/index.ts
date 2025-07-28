@@ -8,6 +8,7 @@ import DashboardView from '@/views/authenticated/DashboardView.vue'
 import { useRouteGuards } from '@/composables/useRouteGuards'
 import EditView from '@/views/authenticated/EditView.vue'
 import UnauthorizedView from '@/views/UnauthorizedView.vue'
+import ProfileView from '@/views/ProfileView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -61,6 +62,12 @@ const router = createRouter({
       path: '/unauthorized',
       name: 'unauthorized',
       component: UnauthorizedView,
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView,
+      beforeEnter: async (to, from, next) => useRouteGuards().authGuard({ next }),
     },
   ],
 })

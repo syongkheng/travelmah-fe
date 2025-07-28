@@ -111,6 +111,10 @@ export function useNav() {
     redirectTo('/unauthorized')
   }
 
+  const redirectToProfile = () => {
+    redirectTo('/profile')
+  }
+
   return {
     refreshPage,
     redirectTo,
@@ -123,5 +127,6 @@ export function useNav() {
     redirectToLanding,
     redirectToDashboard,
     redirectToUnauthorized,
+    redirectToProfile,
   }
 }
