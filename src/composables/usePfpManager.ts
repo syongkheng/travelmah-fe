@@ -1,7 +1,11 @@
 import { ApiRoute } from '@/constants/route'
 import HttpClient from '@/interceptors/HttpClient'
 import type { PfpRequest } from '@/interfaces/PfpRequest'
-import type { ProfileResponse } from '@/interfaces/ProfileResponse'
+
+export interface ReplacePfpRes {
+  blob: string
+  res: string
+}
 
 export function usePfpManager() {
   const retrievePfp = async (): Promise<string> => {
@@ -19,19 +23,20 @@ export function usePfpManager() {
     return result
   }
 
-  const replacePfp = (payload: PfpRequest): Promise<{ blob: string }> => {
+  const replacePfp = (payload: PfpRequest): Promise<ReplacePfpRes> => {
     const result = HttpClient.post(ApiRoute.PFP.REPLACE, { ...payload })
       .then((res) => {
-        return res.data.message
+        return { blob: res.data.data, res: res.data.message }
       })
       .catch((err) => {
         console.log('err', err)
+        return { blob: '', res: '!ok' }
       })
 
     return result
   }
 
-  const removePfp = (): Promise<ProfileResponse> => {
+  const removePfp = (): Promise<string> => {
     const result = HttpClient.post(ApiRoute.PFP.REMOVE)
       .then((res) => {
         return res.data.message

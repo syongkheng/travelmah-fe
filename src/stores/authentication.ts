@@ -105,7 +105,6 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         })
 
       isAuthenticated.value = isLoginRequestSuccessful
-      console.log('isAthenticated: ', isAuthenticated.value)
       return isLoginRequestSuccessful
     } catch {
       registerError.value = 'Login failed. Please try again.'

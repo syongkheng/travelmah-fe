@@ -3,9 +3,10 @@ import { useDashboardManager } from '@/composables/useDashboardManager'
 import { onMounted, ref } from 'vue'
 import { User, Upload } from '@element-plus/icons-vue'
 import { FileWithPreview } from '@/interfaces/FileWithPreview';
-import { usePfpManager } from '@/composables/usePfpManager';
+import { usePfpManager, type ReplacePfpRes } from '@/composables/usePfpManager';
 import type { PfpRequest } from '@/interfaces/PfpRequest';
 import { FileUtils } from '@/utilities/FileUtils';
+import { ElMessage } from 'element-plus';
 
 const { getSelfProfile } = useDashboardManager();
 const { retrievePfp, replacePfp, removePfp } = usePfpManager();
@@ -35,7 +36,6 @@ const saveProfile = () => {
   Object.assign(retrievedUser.value, tempUser.value)
   editMode.value = false
   // Here you would typically make an API call to save changes
-  console.log('Profile saved:', retrievedUser.value)
 }
 
 const cancelEdit = () => {
@@ -76,9 +76,15 @@ const handleAvatarUpload = async (event: Event) => {
       name: pfpToUpload.uuid,
     }
 
-    const uploadedPfpResponse = await replacePfp(pfpPayload)
+    const uploadedPfpResponse = await replacePfp(pfpPayload) as ReplacePfpRes
+
+    if (uploadedPfpResponse.res === 'ok') {
+      ElMessage.success("Photo changed successfully.")
+      retrievedUser.value.pfp = uploadedPfpResponse.blob || pfpToUpload.previewUrl
+      return
+    }
+    ElMessage.error("Something went wrong changing your photo.")
     // Update with server response (in case it processed the image differently)
-    retrievedUser.value.pfp = uploadedPfpResponse.blob || pfpToUpload.previewUrl
   } catch (err) {
     console.error("Upload failed:", err)
     // Optional: revert the preview if upload fails
@@ -91,7 +97,12 @@ const handleAvatarUpload = async (event: Event) => {
 
 const handleRemovePfp = async () => {
   try {
-    await removePfp();
+    const removePfpResponse = await removePfp();
+    if (removePfpResponse !== 'ok') {
+      ElMessage.error("Something went wrong removing your photo.")
+      return
+    }
+    ElMessage.success("Photo removed successfully.")
     retrievedUser.value.pfp = ''; // Clear on successful removal
   } catch (err) {
     console.error("Failed to remove profile picture:", err);
