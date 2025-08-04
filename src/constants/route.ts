@@ -26,4 +26,8 @@ export const ApiRoute = {
     REMOVE: `/api/pfp/remove`,
     RETRIEVE: `/api/pfp`,
   },
+  ACCOUNT: {
+    VALIDATE_PW: `/api/security/pw/validate`,
+    CHANGE_PW: `/api/security/pw/change`,
+  },
 }

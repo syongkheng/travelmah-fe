@@ -1,20 +1,19 @@
 <script lang="ts" setup>
 import { useDashboardManager } from '@/composables/useDashboardManager'
 import { onMounted, ref } from 'vue'
-import { User, Upload } from '@element-plus/icons-vue'
+import { User, Upload, Lock, Unlock } from '@element-plus/icons-vue'
 import { FileWithPreview } from '@/interfaces/FileWithPreview';
 import { usePfpManager, type ReplacePfpRes } from '@/composables/usePfpManager';
 import type { PfpRequest } from '@/interfaces/PfpRequest';
 import { FileUtils } from '@/utilities/FileUtils';
 import { ElMessage } from 'element-plus';
+import ChangePwDialog from '@/components/dialogs/ChangePwDialog.vue';
 
 const { getSelfProfile } = useDashboardManager();
 const { retrievePfp, replacePfp, removePfp } = usePfpManager();
 const editMode = ref(false)
-
-const handleEditProfile = () => {
-  editMode.value = true
-}
+const isHoveringPassword = ref(false)
+const isChangePwDialogVisible = ref(false)
 
 const retrievedUser = ref({
   username: '',
@@ -26,35 +25,19 @@ const retrievedUser = ref({
 })
 
 const tempUser = ref({ ...retrievedUser.value })
-const passwordForm = ref({
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-})
+
+const handleEditProfile = () => {
+  editMode.value = true
+}
 
 const saveProfile = () => {
   Object.assign(retrievedUser.value, tempUser.value)
   editMode.value = false
-  // Here you would typically make an API call to save changes
 }
 
 const cancelEdit = () => {
   tempUser.value = { ...retrievedUser.value }
   editMode.value = false
-}
-
-const changePassword = () => {
-  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-    alert('New passwords do not match!')
-    return
-  }
-  // Password change logic would go here
-  console.log('Password change requested')
-  passwordForm.value = {
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  }
 }
 
 const handleAvatarUpload = async (event: Event) => {
@@ -84,15 +67,15 @@ const handleAvatarUpload = async (event: Event) => {
       return
     }
     ElMessage.error("Something went wrong changing your photo.")
-    // Update with server response (in case it processed the image differently)
   } catch (err) {
     console.error("Upload failed:", err)
-    // Optional: revert the preview if upload fails
-    // retrievedUser.value.pfp = ''
   } finally {
-    // Reset the input to allow selecting the same file again
     input.value = ''
   }
+}
+
+const handleChangePassword = () => {
+  isChangePwDialogVisible.value = true;
 }
 
 const handleRemovePfp = async () => {
@@ -108,6 +91,7 @@ const handleRemovePfp = async () => {
     console.error("Failed to remove profile picture:", err);
   }
 }
+
 onMounted(async () => {
   try {
     const userPfp = await retrievePfp()
@@ -118,6 +102,7 @@ onMounted(async () => {
     retrievedUser.value.bio = profileResponse.bio
     retrievedUser.value.joinedDate = profileResponse.createdDt
     retrievedUser.value.pfp = userPfp
+    tempUser.value = { ...retrievedUser.value }
 
   } catch (error) {
     console.error("Failed to fetch profile: ", error)
@@ -129,27 +114,31 @@ onMounted(async () => {
   <div class="profile-container">
     <div class="profile-header">
       <h1>Profile Settings</h1>
-      <p class="last-updated">
-        <el-tag type="primary">
-          Member since {{ new Date(retrievedUser.joinedDate).toLocaleDateString() }}
-        </el-tag>
-      </p>
     </div>
 
     <div class="profile-content">
       <div class="profile-section">
         <div class="section-header">
           <h2>Basic Information</h2>
-          <button v-if="!editMode" @click="handleEditProfile" class="edit-button">Edit Profile</button>
+
+          <el-button v-if="!editMode" type="primary" @click="handleEditProfile">
+            Edit Profile
+          </el-button>
           <div v-else class="edit-actions">
-            <button @click="saveProfile" class="save-button">Save Changes</button>
-            <button @click="cancelEdit" class="cancel-button">Cancel</button>
+            <el-button type="primary" @click="saveProfile">Save Changes</el-button>
+            <el-button type="danger" @click="cancelEdit">Cancel</el-button>
           </div>
         </div>
-
+        <div>
+          <p class="last-updated">
+            <el-tag type="primary">
+              Member since {{ new Date(retrievedUser.joinedDate).toLocaleDateString() }}
+            </el-tag>
+          </p>
+        </div>
         <div class="profile-details">
           <div class="avatar-container">
-            <div class="avatar-upload" :class="{ 'has-avatar': retrievedUser.pfp }">
+            <div class="avatar-upload">
               <label for="avatar-upload">
                 <el-avatar :size="120" :src="retrievedUser.pfp || ''" class="avatar">
                   <el-icon :size="60">
@@ -165,60 +154,51 @@ onMounted(async () => {
               </label>
               <input id="avatar-upload" type="file" accept="image/*" @change="handleAvatarUpload"
                 style="display: none;">
-
             </div>
             <div><el-button type="danger" v-if="retrievedUser.pfp" @click="handleRemovePfp">{{ "Remove" }}</el-button>
             </div>
           </div>
+          <div class="profile-info">
+            <div class="info-fields">
+              <div class="field">
+                <label>Username</label>
+                <input v-if="editMode" v-model="tempUser.username" type="text">
+                <span v-else>{{ retrievedUser.username }}</span>
+              </div>
 
-          <div class="info-fields">
-            <div class="field">
-              <label>Username</label>
-              <input v-if="editMode" v-model="tempUser.username" type="text">
-              <span class="detail" v-else>{{ retrievedUser.username }}</span>
+              <div class="field">
+                <label>Email</label>
+                <span>{{ retrievedUser.email }}</span>
+              </div>
+
+              <div class="field">
+                <span class="change-password-label" @mouseover="isHoveringPassword = true"
+                  @mouseleave="isHoveringPassword = false" @click="handleChangePassword">
+                  <el-icon>
+                    <component :is="isHoveringPassword ? Unlock : Lock" />
+                  </el-icon>
+                  <span>{{ "Change password" }}</span>
+                </span>
+              </div>
+
+              <div class="field">
+                <label>Birthday</label>
+                <input v-if="editMode" v-model="tempUser.dob" type="date">
+                <span v-else>{{ new Date(retrievedUser.dob).toLocaleDateString() }}</span>
+              </div>
+
             </div>
-
-            <div class="field">
-              <label>Email</label>
-              <input v-if="editMode" v-model="tempUser.email" type="email">
-              <span class="detail" v-else>{{ retrievedUser.email }}</span>
-            </div>
-
-            <div class="field">
-              <label>Birthday</label>
-              <input v-if="editMode" v-model="tempUser.dob" type="date">
-              <span class="detail" v-else>{{ new Date(retrievedUser.dob).toLocaleDateString() }}</span>
-            </div>
-
-            <div class="field">
+            <div class="biography field">
               <label>Bio</label>
               <textarea v-if="editMode" v-model="tempUser.bio"></textarea>
-              <p v-else class="detail bio">{{ retrievedUser.bio ?? "- " }}</p>
+              <p v-else class="bio">{{ retrievedUser.bio ?? "- " }}</p>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="profile-section">
-        <h2>Change Password</h2>
-        <div class="password-form">
-          <div class="field">
-            <label>Current Password</label>
-            <input v-model="passwordForm.currentPassword" type="password">
-          </div>
-          <div class="field">
-            <label>New Password</label>
-            <input v-model="passwordForm.newPassword" type="password">
-          </div>
-          <div class="field">
-            <label>Confirm New Password</label>
-            <input v-model="passwordForm.confirmPassword" type="password">
-          </div>
-          <button @click="changePassword" class="save-button">Update Password</button>
         </div>
       </div>
     </div>
   </div>
+  <ChangePwDialog :isOpen="isChangePwDialogVisible" :onClose="() => isChangePwDialogVisible = false" />
 </template>
 
 <style scoped>
@@ -226,7 +206,21 @@ onMounted(async () => {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-color);
+}
+
+.change-password-label {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  color: var(--hyperlink-color)
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-header {
@@ -255,12 +249,13 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .profile-details {
   display: flex;
   gap: 2rem;
+  margin-top: 1rem;
 }
 
 .avatar-container {
@@ -272,6 +267,7 @@ onMounted(async () => {
 
 .avatar-upload {
   position: relative;
+  align-content: center;
   cursor: pointer;
   border-radius: 50%;
 }
@@ -301,6 +297,8 @@ onMounted(async () => {
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.3s ease;
+  width: 120px;
+  height: 120px;
 }
 
 .avatar-upload:hover .upload-overlay {
@@ -314,8 +312,12 @@ onMounted(async () => {
 .info-fields {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 3fr 1fr;
   gap: 1rem;
+}
+
+.biography {
+  margin-top: 1rem;
 }
 
 .field {
@@ -326,11 +328,9 @@ onMounted(async () => {
   display: block;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #333;
 }
 
 .field input,
-.field select,
 .field textarea {
   width: 100%;
   padding: 0.5rem;
@@ -349,58 +349,9 @@ onMounted(async () => {
   line-height: 1.5;
 }
 
-.password-form {
-  display: grid;
-  gap: 1rem;
-}
-
-button {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.edit-button {
-  background: #3498db;
-  color: white;
-  border: none;
-}
-
-.edit-button:hover {
-  background: #2980b9;
-}
-
-.save-button {
-  background: #2ecc71;
-  color: white;
-  border: none;
-  margin-right: 0.5rem;
-}
-
-.save-button:hover {
-  background: #27ae60;
-}
-
-.cancel-button {
-  background: #e74c3c;
-  color: white;
-  border: none;
-}
-
-.cancel-button:hover {
-  background: #c0392b;
-}
-
 .edit-actions {
   display: flex;
-}
-
-.detail {
-  color: var(--text-color);
-  display: block;
-  padding: 0.5rem 0;
+  gap: 0.5rem;
 }
 
 @media (max-width: 768px) {
