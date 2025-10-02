@@ -115,6 +115,10 @@ export function useNav() {
     redirectTo('/profile')
   }
 
+  const redirectToCalendar = () => {
+    redirectTo('/calendar')
+  }
+
   return {
     refreshPage,
     redirectTo,
@@ -128,5 +132,6 @@ export function useNav() {
     redirectToDashboard,
     redirectToUnauthorized,
     redirectToProfile,
+    redirectToCalendar,
   }
 }

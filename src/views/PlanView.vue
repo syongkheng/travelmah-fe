@@ -149,17 +149,19 @@ const cascaderProps = {
                 </span>
               </el-tooltip>
             </span>
+            <div class="tag-wrapper">
+              <el-tag class="clickable privacy-tag" type="danger" @click="openNotification"
+                :size="isMobile ? 'large' : 'default'">
+                {{ 'Collaborator list' }}
+              </el-tag>
+            </div>
             <el-tooltip class="box-item" effect="dark" content="Save Itinerary" placement="top">
               <el-button :icon="DocumentAdd" circle type="primary" @click="saveItinerary"
                 :disabled="isCreateAgendaButtonDisabled" class="save-button" :size="isMobile ? 'large' : 'default'" />
             </el-tooltip>
           </div>
-        </div>
-        <div class="tag-wrapper">
-          <el-tag class="clickable privacy-tag" type="danger" @click="openNotification"
-            :size="isMobile ? 'large' : 'default'">
-            {{ 'Collaborator list' }}
-          </el-tag>
+
+
         </div>
       </div>
       <div class="itinerary-overview-container">
@@ -201,6 +203,12 @@ const cascaderProps = {
       </div>
     </header>
     <el-divider />
+    <div class="flight-details-container">
+      <h3>{{ "Flight Details" }}</h3>
+      <div>
+        x
+      </div>
+    </div>
     <div class="itinerary-wrapper">
       <div v-for="day in itinerary.durationInDays" :key="day" class="day-container">
         <div class="day-wrapper">
@@ -315,6 +323,11 @@ const cascaderProps = {
 
 .privacy-tag {
   width: fit-content;
+}
+
+/* ============ Flight Content ============ */
+.flight-details-container {
+  padding: 2rem;
 }
 
 /* ============ Itinerary Content ============ */

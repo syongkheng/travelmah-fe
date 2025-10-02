@@ -11,6 +11,7 @@ export function useBreakpointManager() {
   const currentBreakpoint = computed(() => {
     if (width.value <= Breakpoint.S) return 'S'
     if (width.value <= Breakpoint.M) return 'M'
+    if (width.value <= Breakpoint.CALENDAR) return 'CALENDAR'
     return 'L'
   })
 

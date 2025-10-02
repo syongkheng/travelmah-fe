@@ -9,6 +9,7 @@ import { useRouteGuards } from '@/composables/useRouteGuards'
 import EditView from '@/views/authenticated/EditView.vue'
 import UnauthorizedView from '@/views/UnauthorizedView.vue'
 import ProfileView from '@/views/ProfileView.vue'
+import CalendarView from '@/views/CalendarView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -68,6 +69,11 @@ const router = createRouter({
       name: 'profile',
       component: ProfileView,
       beforeEnter: async (to, from, next) => useRouteGuards().authGuard({ next }),
+    },
+    {
+      path: '/calendar',
+      name: 'calendar',
+      component: CalendarView,
     },
   ],
 })

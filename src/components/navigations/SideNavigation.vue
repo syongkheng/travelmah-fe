@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Location, Operation, Search, Warning } from '@element-plus/icons-vue'
+import { Calendar, Location, Operation, Search, Warning } from '@element-plus/icons-vue'
 import { useLayoutStateStore } from '@/stores/layoutState'
 import { useNav } from '@/hooks/useNav'
 import { ElMessage } from 'element-plus';
@@ -56,6 +56,15 @@ onMounted(async () => {
       </el-menu-item>
     </span>
     <el-divider />
+    <span @click="navigate.redirectToCalendar()">
+
+      <el-menu-item index="5">
+        <el-icon>
+          <Calendar />
+        </el-icon>
+        <template #title>{{ 'Calendar' }}</template>
+      </el-menu-item>
+    </span>
     <span class="authenticated menu" v-if="isAuthenticated">
       <span @click="handleMyItinerary">
         <el-menu-item index="3">
